@@ -1,0 +1,265 @@
+#
+# Настройки центра сертификации ГОСТ-2012
+#
+
+openssl_conf=gost_def
+
+HOME			= .
+RANDFILE		= $ENV::HOME/.rnd
+
+# Extra OBJECT IDENTIFIER info:
+#oid_file		= $ENV::HOME/.oid
+oid_section		= gost_oids
+
+# To use this configuration file with the "-extfile" option of the
+# "openssl x509" utility, name here the section containing the
+# X.509v3 extensions to use:
+# extensions		= 
+# (Alternatively, use a configuration file that has only
+# X.509v3 extensions in its main [= default] section.)
+
+[ gost_oids ]
+
+# We can add new OIDs in here for use by 'ca', 'req' and 'ts'.
+# Add a simple OID like this:
+# testoid1=1.2.3.4
+# Or use config file substitution like this:
+# testoid2=${testoid1}.5.6
+
+# Policies used by the TSA examples.
+#tsa_policy1 = 1.2.3.4.1
+#tsa_policy2 = 1.2.3.4.5.6
+#tsa_policy3 = 1.2.3.4.5.7
+
+#oid1 	= 1.2.643.100.113.1
+#oid2	= 1.2.643.100.113.2
+#oid3	= 1.2.643.100.113.3
+#oid4	= 1.2.643.100.113.4
+#oid5	= 1.2.643.100.113.5
+
+####################################################################
+[ ca ]
+default_ca	= CA_gost		# Раздел головного удостоверяющиего центра сертификации
+
+####################################################################
+[ CA_gost ]
+
+dir		= /opt/etc/ssl/gost-ca/intermediate
+certs		= $dir/certs
+crl_dir		= $dir/crl
+database	= $dir/index.txt
+new_certs_dir	= $dir/newcerts
+
+certificate	= $dir/intermediate.cer
+serial		= $dir/serial.txt
+crlnumber	= $crl_dir/crlnumber.txt
+crl		= $crl_dir/intermediate.crl
+private_key	= $dir/private/intermediate.key
+RANDFILE	= $dir/private/.rand
+
+#x509_extensions	= usr_cert
+
+#name_opt 	= CA_gost		# Subject Name options
+#cert_opt 	= CA_gost		# Certificate field options
+
+copy_extensions = copy
+crl_extensions	= crl_ext
+
+default_days	= 365		# сколько дней будет действителен выданный сертификат
+default_crl_days= 30		# Через сколько дней пересоздавать список отзывов сертификатов
+default_md = md_gost12_256	# алгоритм хеширования по умолчанию
+#preserve	= no			# keep passed DN ordering
+
+# A few difference way of specifying how similar the request should look
+# For type CA, the listed attributes must be the same, and the optional
+# and supplied fields are just that :-)
+policy		= intermediate_policy
+
+# Политика Головного удостоверяющего центра сертификации.
+[ CA_policy ]
+countryName		= match
+stateOrProvinceName	= match
+organizationName	= match
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+# Политика промежуточных (подчинённых) центров сертификации.
+# Сертификаты будет выдавать Подчиненный УЦ.
+[ intermediate_policy ]
+countryName		= optional
+stateOrProvinceName	= optional
+localityName		= optional
+organizationName	= optional
+organizationalUnitName	= optional
+commonName		= supplied
+emailAddress		= optional
+
+####################################################################
+[ req ]
+#default_bits		= 2048
+#default_keyfile 	= privkey.pem
+distinguished_name	= req_distinguished_name
+attributes		= req_attributes
+
+x509_extensions	= v3_ca	# Расширения V3 для самоподписанных сертификатов головного УЦ
+
+# Passwords for private keys if not present they will be prompted for
+#input_password = secret
+#output_password = secret
+
+string_mask = utf8only	# Информация в кодировке UTF8 для поддержки русского языка
+
+req_extensions = v3_req # The extensions to add to a certificate request
+
+[ req_distinguished_name ]
+countryName			= Country Name (2 letter code)
+countryName_default		= RU
+countryName_min			= 2
+countryName_max			= 2
+
+stateOrProvinceName		= State or Province Name (full name)
+stateOrProvinceName_default	= Удмуртская Республика
+
+localityName			= Locality Name (eg, city)
+localityName_default	= г. Ижевск
+
+0.organizationName		= Organization Name (eg, company)
+0.organizationName_default	= phpchain.ru
+
+# we can do this but it is not needed normally :-)
+#1.organizationName		= Second Organization Name (eg, company)
+#1.organizationName_default	= World Wide Web Pty Ltd
+
+#organizationalUnitName		= Organizational Unit Name (eg, section)
+#organizationalUnitName_default	=
+
+commonName			= Common Name (e.g. server FQDN or YOUR name)
+#commonName_default	= phpchain.ru - Головной УЦ
+commonName_max			= 64
+
+emailAddress			= Email Address
+emailAddress_default	= ca@phpchain.ru
+emailAddress_max		= 64
+
+# SET-ex3			= SET extension number 3
+
+[ req_attributes ]
+challengePassword		= A challenge password
+challengePassword_min		= 4
+challengePassword_max		= 20
+
+unstructuredName		= An optional company name
+
+[ usr_cert ]
+basicConstraints=CA:FALSE
+#nsCertType = client, email
+nsCertType = client, email, objsign
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+nsComment = "OpenSSL Generated Client Certificate"
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+extendedKeyUsage = clientAuth, emailProtection
+
+# This stuff is for subjectAltName and issuerAltname.
+# Import the email address.
+# subjectAltName=email:copy
+# An alternative to produce certificates that aren't
+# deprecated according to PKIX.
+# subjectAltName=email:move
+
+# Copy subject details
+# issuerAltName=issuer:copy
+
+#nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
+#nsBaseUrl
+#nsRevocationUrl
+#nsRenewalUrl
+#nsCaPolicyUrl
+#nsSslServerName
+
+[ v3_req ]
+# Расширения V3 добавляемые к запросу на сертификат
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+
+[ v3_ca ]
+# Расширения V3 для корневого центра сертификации.
+# При указании аргумента командной строки
+# -extensions v3_ca будут применены расширения из этой секции
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer
+basicConstraints = critical,CA:true
+keyUsage = critical, cRLSign, keyCertSign
+subjectAltName = @alt_names_ca
+
+[alt_names_ca]
+DNS.0   = phpchain.ru
+DNS.1   = www.phpchain.ru
+IP.0	= 94.181.94.215
+
+[ v3_intermediate_ca ]
+# Extensions for a typical intermediate CA (`man x509v3_config`).
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+subjectAltName = @alt_names_intermediate_ca
+
+[alt_names_intermediate_ca]
+DNS.0   = phpchain.ru
+DNS.1   = www.phpchain.ru
+IP.0	= 94.181.94.215
+
+[ v3_openvpn_server ]
+basicConstraints        = critical, CA:FALSE
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always, issuer:always
+keyUsage                = critical, nonRepudiation, digitalSignature, keyEncipherment, keyAgreement 
+extendedKeyUsage        = critical, serverAuth
+subjectAltName          = @alt_names_openvpn_server
+
+[alt_names_openvpn_server]
+DNS.0   = phpchain.ru
+DNS.1   = www.phpchain.ru
+IP.0	= 94.181.94.215
+
+[ v3_openvpn_client ]
+basicConstraints        = critical, CA:FALSE
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always, issuer:always
+keyUsage                = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage        = critical, clientAuth
+#subjectAltName          = @alt_names_openvpn_client
+
+#[alt_names_openvpn_client]
+
+[ crl_ext ]
+# Расширение crl_ext будет автоматически применяться
+# при создании списков отзыва сертификатов
+# (CRL — certificate revocation lists).
+authorityKeyIdentifier=keyid:always
+
+[ ocsp ]
+# Расширение ocsp будет применяться при подписывании
+# сертификата OCSP (Online Certificate Status Protocol,
+# онлайн протокол статуса сертификатов).
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, digitalSignature
+extendedKeyUsage = critical, OCSPSigning
+
+####################################################################
+
+# Поддержка шифрования ГОСТ
+[gost_def]
+engines = engine_section
+ 
+[engine_section]
+gost = gost
+ 
+[gost]
+#default_algorithms = ALL
+default_algorithms = CIPHERS, DIGEST, PKEY
+CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet
